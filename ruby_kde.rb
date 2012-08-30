@@ -10,9 +10,13 @@ Distribution::Normal.pdf(distance)
 
 MeshCount = 9200 
 
-Sigmas = 5
+Sigmas = 300
 
 Bandwidth = 100
+
+def nrd0(inputArray, stdDeviation) 
+  bandwidth = ((4 * stdDeviation ** 5)/(3 * inputArray.size))**(1.0/5)
+end
 
 def kde(arr, bw = Bandwidth, sigmas= Sigmas, sampling_density = MeshCount)
   # Initialization steps
@@ -30,10 +34,12 @@ def kde(arr, bw = Bandwidth, sigmas= Sigmas, sampling_density = MeshCount)
     [mid, intensity ]
   end
 end
-test_range = (1..10).to_a+ (15..30).step(5).to_a + (40..100).step(10).to_a+ (100..1500).step(100).to_a 
-resp = kde(test_arr, 1)
-responses = test_range.map {|bw| [bw, kde(test_arr, bw)] }
-p resp
+#test_range = (1..10).to_a+ (15..30).step(5).to_a + (40..100).step(10).to_a+ (100..1500).step(100).to_a 
+#responses = test_range.map {|bw| [bw, kde(test_arr, bw)] }
+#p resp
+
+bandwidth = nrd0(test_arr, Sigmas)
+resp = kde(test_arr, bandwidth)
 
 x, y = resp.transpose
 
@@ -48,6 +54,8 @@ ten = []
    three << [i, Distribution::Normal.custom_pdf(i, 3)]
    ten << [i, Distribution::Normal.custom_pdf(i, 10)]
 end
+
+
 
 require 'gnuplot'
 =begin
@@ -85,14 +93,12 @@ Gnuplot.open do |gp|
   Gnuplot::Plot.new( gp ) do |plot|
   
     #plot.xrange "[0:1000]"
-    plot.xrange "[15:60]"
+    plot.xrange "[-500:1000]"
     plot.terminal 'svg'
     plot.output "bandwidthing.svg"
-    responses.each do |i, resp| 
-      plot.data << Gnuplot::DataSet.new( resp.transpose ) do |ds|
-        ds.with = "lines"
-        ds.title = "BW: #{i}"
-      end
+    plot.data << Gnuplot::DataSet.new( resp.transpose ) do |ds|
+      ds.with = "lines"
+      ds.title = "BW: #{bandwidth}"
     end
   end
 end
