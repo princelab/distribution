@@ -95,7 +95,8 @@ module Distribution
         end
         # Normal pdf with a custom sigma value, still centered around 0.
         def custom_pdf(x, sigma = 1.0)
-          (sigma/ SQ2PI)*Math::exp(-(x**2/2.0))
+          mean = 0 
+          (1.0/( sigma*SQ2PI))*Math::exp(-0.5*((x-mean)/sigma)**2)
         end
 
       end

@@ -8,11 +8,11 @@ distance = 1
 Distribution::Normal.pdf(distance)
 
 
-MeshCount = 2200 
+MeshCount = 9200 
 
-Sigmas = 3
+Sigmas = 5
 
-Bandwidth = 1
+Bandwidth = 100
 
 def kde(arr, bw = Bandwidth, sigmas= Sigmas, sampling_density = MeshCount)
   # Initialization steps
@@ -21,35 +21,78 @@ def kde(arr, bw = Bandwidth, sigmas= Sigmas, sampling_density = MeshCount)
   step_size = (max-min)/sampling_density.to_f
   arr.sort!
   # Step through the range
-  output = (min..max).step(step_size).map do |lower_end|
-    high_end = lower_end+ bw*sigmas
+  output = (min..max).step(step_size).map do |mid|
+    high_end = mid+ bw*sigmas
+    lower_end = mid - bw*sigmas
     included = arr.select {|a| (lower_end..high_end).include?(a)}
-    intensity = included.map {|a| Distribution::Normal.custom_pdf(a-lower_end, bw) }.inject(:+)
+    intensity = included.map {|a| Distribution::Normal.custom_pdf(a-mid, bw) }.inject(:+)
     intensity ||= 0
-    [intensity, lower_end]
+    [mid, intensity ]
   end
 end
-
-resp = kde(test_arr)
+test_range = (1..10).to_a+ (15..30).step(5).to_a + (40..100).step(10).to_a+ (100..1500).step(100).to_a 
+resp = kde(test_arr, 1)
+responses = test_range.map {|bw| [bw, kde(test_arr, bw)] }
 p resp
 
-y, x = resp.transpose
+x, y = resp.transpose
 
-(-10..10).step(2) do |i|
-  p Distribution::Normal.custom_pdf(3, i)
+norm = []
+five = []
+three = []
+ten = []
+
+(-10..10).step(0.01) do |i|
+   norm << [i, Distribution::Normal.custom_pdf(i)]
+   five << [i, Distribution::Normal.custom_pdf(i, 5)]
+   three << [i, Distribution::Normal.custom_pdf(i, 3)]
+   ten << [i, Distribution::Normal.custom_pdf(i, 10)]
 end
 
 require 'gnuplot'
+=begin
 Gnuplot.open do |gp|
   Gnuplot::Plot.new( gp ) do |plot|
   
-    plot.xrange "[0:1000]"
+    #plot.xrange "[0:1000]"
+    plot.xrange "[-5:5]"
     
-    plot.data << Gnuplot::DataSet.new( [x,y] ) do |ds|
+    plot.data << Gnuplot::DataSet.new( norm.transpose ) do |ds|
       ds.with = "lines"
-      ds.notitle
+      ds.title = "BW: 1"
+    end
+
+    plot.data << Gnuplot::DataSet.new( three.transpose ) do |ds|
+      ds.with = "lines"
+      ds.title = "BW: 3"
     end
     
+    plot.data << Gnuplot::DataSet.new( five.transpose ) do |ds|
+      ds.with = "lines"
+      ds.title = "BW: 5"
+    end
+
+    plot.data << Gnuplot::DataSet.new( ten.transpose ) do |ds|
+      ds.with = "lines"
+      ds.title = "BW: 10"
+    end
   end
   
+end
+=end
+# Begins after you close the first plot
+Gnuplot.open do |gp|
+  Gnuplot::Plot.new( gp ) do |plot|
+  
+    #plot.xrange "[0:1000]"
+    plot.xrange "[15:60]"
+    plot.terminal 'svg'
+    plot.output "bandwidthing.svg"
+    responses.each do |i, resp| 
+      plot.data << Gnuplot::DataSet.new( resp.transpose ) do |ds|
+        ds.with = "lines"
+        ds.title = "BW: #{i}"
+      end
+    end
+  end
 end
