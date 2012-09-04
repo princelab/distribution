@@ -37,6 +37,7 @@ module Distribution
     MeshCount = 1e4
     ## 
     # :singleton-method: kde
+    # Accepts a single member array plus optional additional information
     # Returns a two member array, [x_vals,y_vals] representing the kde
     def kde(arr, bw = Bandwidth, sigmas = SIGMAS, sampling_density = MeshCount)
       # Initialization steps
