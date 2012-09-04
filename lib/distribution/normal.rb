@@ -32,6 +32,28 @@ module Distribution
     # Returns a lambda which returns a random number from
     # X ~ N(0,1)
 
-    
+    Bandwidth = 2, 
+    Sigmas = 3, 
+    MeshCount = 1e4
+    ## 
+    # :singleton-method: kde
+    # Returns a two member array, [x_vals,y_vals] representing the kde
+    def kde(arr, bw = Bandwidth, sigmas = SIGMAS, sampling_density = MeshCount)
+      # Initialization steps
+      min = arr.min - bw*sigmas
+      max = arr.max + bw*sigmas
+      step_size = (max-min)/sampling_density.to_f
+      arr.sort!
+      # Step through the range
+      output = (min..max).step(step_size).map do |mid|
+        high_end = mid+ bw*sigmas
+        lower_end = mid - bw*sigmas
+        included = arr.select {|a| (lower_end..high_end).include?(a)}
+        intensity = included.map {|a| Distribution::Normal.custom_pdf(a-mid, bw) }.inject(:+)
+        intensity ||= 0
+        [mid, intensity ]
+      end
+      output.transpose
+    end
   end
 end
