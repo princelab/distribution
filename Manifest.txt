@@ -17,6 +17,7 @@ data/template/distribution/gsl.erb
 data/template/distribution/ruby.erb
 data/template/spec.erb
 lib/distribution.rb
+lib/bandwidth.rb
 lib/distribution/beta.rb
 lib/distribution/beta/gsl.rb
 lib/distribution/beta/java.rb
